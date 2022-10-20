@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <script
+      src="https://code.jquery.com/jquery-3.6.1.min.js"
+      integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ="
+      crossorigin="anonymous"
+    ></script>
+    <style>
+      table {
+        margin: auto;
+
+        border: 1px solid black;
+
+        border-collapse: collapse;
+      }
+
+      th {
+        border: 1px solid black;
+
+        padding-left: 80px;
+
+        padding-right: 80px;
+
+        font-size: 30px;
+      }
+      td {
+        margin: auto;
+        border: 1px solid black;
+
+        padding-left: 80px;
+        font-size: 30px;
+      }
+    </style>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+  </head>
+  <body style="background-color: rgb(172, 172, 105)">
+    <h1><center>Here is Your Form</center></h1>
+    <br />
+
+    <div class="container">
+      <form id="sumbitBtn">
+        <label>Name : </label>
+        <input type="text" name="name" id="name" style="margin-left: 28px" />
+        <br />
+        <br />
+
+        <label>Number :</label>
+        <input
+          type="number"
+          name="number"
+          id="number"
+          style="margin-left: 12px"
+        />
+        <br />
+        <br />
+
+        <input type="submit" value="submit" />
+      </form>
+    </div>
+    <br /><br /><br /><br /><br /><br /><br />
+
+    <h2>Details Provided By You</h2>
+
+    <input
+      type="text"
+      id="searchMe"
+      value=""
+      placeholder="Search for names.."
+    />
+    <input type="submit" onclick="search()" value="Search" /><br /><br /><br />
+
+    <table id="tab1">
+      <tr>
+        <th>S.No.</th>
+        <th>Name</th>
+        <th>Number</th>
+      </tr>
+
+      <% sData.forEach(function(value,index){%>
+
+      <tr>
+        <td><%= index + 1 %></td>
+        <td id="td1"><%= value.dataValues.Name%></td>
+        <td id="td1"><%= value.dataValues.Number%></td>
+      </tr>
+      <% }) %>
+    </table>
+
+    <div id="div2" style="margin: auto"></div>
+
+    <table id="tab2"></table>
+
+    <button type="button" id="div1" onclick="loadmore()">Load More</button>
+
+    <script>
+      var getVal = $("table tr:last td:first").text();
+      //console.log("table last",value)
+      var last = parseInt(getVal);
+
+      if (getVal < 5) {
+        document.getElementById("div1").style.display = "none";
+      }
+
+      $("#sumbitBtn").on("submit", function (event) {
+        event.preventDefault();
+        var str = $(this).serialize();
+        console.log(str);
+
+        var value = $("table tr:last td:first").text();
+        console.log("table last", value);
+        var last = parseInt(value) + 1;
+        //var print = last+u+1;
+        console.log("last value for new entry", last);
+
+        var value = $("table tr:last td:first").text();
+        console.log("table last", value);
+        var last = parseInt(value) + 1;
+
+        $.ajax({
+          method: "post",
+          url: "/",
+          data: str,
+          success: function (s) {
+            if (s.Name != "" || s.Number == "") {
+              $("#tab1").append(
+                "<tr><td>" +
+                  last +
+                  "</td><td>" +
+                  s.Name +
+                  "</td><td>" +
+                  s.Number +
+                  "</td></tr>"
+              );
+            }
+            $("#name").val("");
+            $("#number").val("");
+          },
+          error: function (err) {
+            console.log(err);
+          },
+        });
+      });
+
+      var offset = 5;
+      var limit = 5;
+
+      function loadmore() {
+        var searchMe = $("#searchMe").val();
+        //console.log("searchMe",searchMe)
+
+        var value = $("table tr:last td:first").text();
+        //console.log("table last",value)
+        var last = parseInt(value);
+
+        $.ajax({
+          method: "post",
+          url: "/load",
+          data: { offset: offset, searchMe: searchMe },
+          success: function (ss) {
+            var mydata = ss.data;
+            console.log("ss from loadmore", mydata);
+
+            var obj = mydata.rows;
+            console.log("looking for rows data", obj);
+
+            count = mydata.count;
+            console.log("count here", Count);
+
+            for (var u = 0; u < obj.length; u++) {
+              var print = last + u + 1;
+
+              $("#tab1").append(
+                "<tr><td>" +
+                  print +
+                  "</td><td>" +
+                  obj[u].Name +
+                  "</td><td>" +
+                  obj[u].Number +
+                  "</td></tr>"
+              );
+            }
+            offset += limit;
+
+            var len = obj.length;
+
+            if (len < 5 || offset == count) {
+              document.getElementById("div1").style.display = "none";
+            }
+          },
+          error: function (err) {
+            console.log(err);
+          },
+        });
+      }
+
+      function search() {
+        document.getElementById("tab1").style.display = "none";
+
+        var searchMe = $("#searchMe").val();
+        //console.log("searchMe",searchMe)
+
+        var value = $("table tr:last td:first").text();
+        //console.log("table last",value)
+        var last = parseInt(value);
+        //console.log("how u",last)
+
+        $.ajax({
+          method: "post",
+          url: "/search",
+          data: { searchM: searchMe, offset: offset },
+          success: function (ss) {
+            var mydata = ss.data;
+            $("#tab2").append(
+              "<tr><th>S.No</th><th>Name</th><th>Number</th></tr>"
+            );
+            for (var u = 0; u < mydata.length; u++) {
+              var print = u + 1;
+              $("#tab2").append(
+                "<tr><td>" +
+                  print +
+                  "</td><td>" +
+                  mydata[u].Name +
+                  "</td><td>" +
+                  mydata[u].Number +
+                  "</td></tr></table>"
+              );
+            }
+            offset += limit;
+          },
+          error: function (err) {
+            console.log(err);
+          },
+        });
+      }
+
+      //function loadmore() {
+      //$.ajax({
+      //    method: "post",
+      //    url: "/search",
+      //    data: { offset: offset },
+      //    success: function (sss) {
+      //      var mydata = sss.data;
+
+      //      for (var u = 0; u < mydata.length; u++) {
+      //        $("#tab1").append(
+      //          "<tr><td>" +
+      //            mydata[u].id +
+      //            "</td><td>" +
+      //            mydata[u].Name +
+      //            "</td><td>" +
+      //            mydata[u].Number +
+      //            "</td></tr>"
+      //        );
+      //      }
+      //      offset += limit;
+      //    },
+      //    error: function (err) {
+      //      console.log(err);
+      //    },
+      //  });
+      //}
+    </script>
+  </body>
+</html>
